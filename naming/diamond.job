@@ -22,20 +22,24 @@ transeq -sequence unknown.genes.fa -outseq unknown.peptides.fa
 # SEARCH DB
 # running a search in blastp mode
 conda activate diamondenv
-diamond blastp -d ~/scratch/imperial/ncbi-nr-refseq/reference -q unknown.peptides.fa -k 1 --max-hsps 1 -e 0.00001 --query-cover 50 --subject-cover 50 --id 70 -o staph.matches -p $NSLOTS
+
+#diamond blastp -d ~/scratch/imperial/ncbi-nr-refseq/reference -q unknown.peptides.fa -k 1 --max-hsps 1 -e 0.00001 --query-cover 50 --subject-cover 50 --id 70 -o staph.matches -p $NSLOTS
 
 
 # FIND GENE IDS
 awk '{ print $1 }' staph.matches > matched.centroids
 awk '{ print $2 }' staph.matches > matched.peptides
 
-: <<'END'
+
 for i in `cat matched.peptides`
 do 
-eresult=$(esearch -db protein -query ${i} | elink -target gene | esummary | xtract -pattern DocumentSummary -element Name)
+eresult=$(efetch -db protein -id ${i} -format xml | xtract -pattern Prot-ref_name -element Prot-ref_name_E)
+
 echo "${i},${eresult}" >> matched.genes
 done
 
+
+: <<END
 # IF GENE ID'S CANNOT BE FOUND EXTRACT PROTEIN TITLE
 cat matched.genes | grep ',$' > unmatched.genes
 for i in `cat unmatched.genes`
