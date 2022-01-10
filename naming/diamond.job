@@ -6,21 +6,31 @@
 #$ -pe smp.pe 32
 #$ -l mem1500  
 module load apps/binapps/anaconda3/2020.07
-: <<'END'
+module load tools/env/proxy2
+
+# EXTRACT CLUSTERS WITH NO HUMAN-READABLE NAME
+conda activate seqkit_env
+grep group_ pan_genome_reference.fa > unknown.genes
+sed -i "s/>//g" unknown.genes
+seqtk subseq  pan_genome_reference.fa  unknown.genes  > unknown.genes.fa
+
+
+
 conda activate emboss_env
-transeq -sequence pan_genome_reference.fa -outseq pan_genome_peptides.fa
+transeq -sequence unknown.genes.fa -outseq unknown.peptides.fa
 
 # SEARCH DB
 # running a search in blastp mode
 diamond blastp -d ~/scratch/imperial/ncbi-nr-refseq/reference -q pan_genome_peptides.fa -k 1 --max-hsps 1 -e 0.00001 --query-cover 50 --subject-cover 50 --id 70 -o staph.matches -p $NSLOTS
 
-END
+
 
 # FIND GENE IDS
 conda activate diamondenv
 awk '{ print $1 }' staph.matches > matched.centroids
 awk '{ print $2 }' staph.matches > matched.peptides
 
+: <<'END'
 for i in `cat matched.peptides`
 do 
 eresult=$(esearch -db protein -query ${i} | elink -target gene | esummary | xtract -pattern DocumentSummary -element Name)
@@ -36,4 +46,4 @@ echo "${i},${eresult}" >> unmatched.fix.genes
 done
 
 
-
+END
