@@ -1,0 +1,18 @@
+#!/bin/bash --login
+#$ -cwd
+#$ -N name
+#$ -M harry.chown@postgrad.manchester.ac.uk
+#$ -m e
+#$ -pe smp.pe 32
+#$ -l mem1500  
+module load apps/binapps/anaconda3/2020.07
+
+conda activate emboss_env
+transeq -sequence pan_genome_reference.fa -outseq pan_genome_peptides.fa
+
+# SEARCH DB
+# running a search in blastp mode
+diamond blastp -d ~/scratch/imperial/ncbi-nr-refseq/reference -q pan_genome_peptides.fa -k 1 --max-hsps 1 -e 0.00001 --query-cover 50 --subject-cover 50 --id 70 -o staph.matches -p $NSLOTS
+
+
+
