@@ -22,7 +22,7 @@ transeq -sequence unknown.genes.fa -outseq unknown.peptides.fa
 # SEARCH DB
 # running a search in blastp mode
 conda activate diamondenv
-diamond blastp -d ~/scratch/imperial/ncbi-nr-refseq/reference -q pan_genome_peptides.fa -k 1 --max-hsps 1 -e 0.00001 --query-cover 50 --subject-cover 50 --id 70 -o staph.matches -p $NSLOTS
+diamond blastp -d ~/scratch/imperial/ncbi-nr-refseq/reference -q unknown.peptides.fa -k 1 --max-hsps 1 -e 0.00001 --query-cover 50 --subject-cover 50 --id 70 -o staph.matches -p $NSLOTS
 
 
 # FIND GENE IDS
