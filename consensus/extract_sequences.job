@@ -1,0 +1,41 @@
+#!/bin/bash --login
+#$ -cwd
+#$ -N ext
+#$ -M harry.chown@postgrad.manchester.ac.uk
+#$ -m e
+#$ -pe smp.pe 4
+#$ -t 1-126
+module load apps/binapps/anaconda3/2020.07
+
+# Script aims to extract pan-genome cluster sequences
+gff_file=`awk "NR==$SGE_TASK_ID" gff_paths.txt`
+fasta_file=$(echo $gff_file | sed 's/\.gff/_skesa\.fa/' | sed 's/gff/assemblies/')
+
+
+# 1) REMOVE FASTA SEQUENCE FROM GFF
+if grep -q "##FASTA" $gff_file
+then 
+	sed -n '/##FASTA/q;p' $gff_file | grep CDS > clean_gff.tmp$SGE_TASK_ID
+else
+	grep CDS $gff_file > clean_gff.tmp$SGE_TASK_ID
+fi
+
+# 2) REMOVE PREVIOUS ATTEMPTS
+if [ -e line.tmp$SGE_TASK_ID ]
+then
+	rm -rf line.tmp$SGE_TASK_ID
+fi
+
+# 2) UPDATE FASTA HEADERS
+while read lines
+do
+	gene_id=$(echo "$lines" | cut -d$'\t' -f9 | cut -d"=" -f2 | cut -d";" -f1)
+	# Replacing the name column with true name
+	echo "$lines" | sed "s/CDS/${gene_id}/" >> line.tmp$SGE_TASK_ID
+done <clean_gff.tmp$SGE_TASK_ID
+
+# Extract sequence using bedtools
+conda activate bedtools_env
+bedtools getfasta -name -fi $fasta_file -bed line.tmp$SGE_TASK_ID > fasta.tmp$SGE_TASK_ID
+sed 's/::.*//g' fasta.tmp$SGE_TASK_ID >> isolate.fasta
+
