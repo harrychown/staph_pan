@@ -20,7 +20,7 @@ fi
 # 2) REMOVE PREVIOUS ATTEMPTS
 if [ -e line.tmp$SGE_TASK_ID ]
 then
-	rm -rf line.tmp$SGE_TASK_ID isolate.fasta
+	rm -rf line.tmp$SGE_TASK_ID
 fi
 
 # 2) UPDATE FASTA HEADERS
@@ -34,7 +34,12 @@ done <clean_gff.tmp$SGE_TASK_ID
 # Extract sequence using bedtools
 conda activate bedtools_env
 bedtools getfasta -name -fi $fasta_file -bed line.tmp$SGE_TASK_ID > fasta.tmp$SGE_TASK_ID
-sed 's/::.*//g' fasta.tmp$SGE_TASK_ID >> isolate.fasta
+sed 's/::.*//g' fasta.tmp$SGE_TASK_ID > isolate.fasta$SGE_TASK_ID
+
+if grep -q "ATGGAAGCNKJPIGM_02585" isolate.fasta$SGE_TASK_ID
+then
+	echo $gff_file > problem1.tmp
+fi
 
 # 3) REMOVE TEMPORARY FILES
 rm *.tmp$SGE_TASK_ID
