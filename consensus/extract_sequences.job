@@ -1,9 +1,6 @@
 #!/bin/bash --login
 #$ -cwd
-#$ -N ext
-#$ -M harry.chown@postgrad.manchester.ac.uk
-#$ -m e
-#$ -pe smp.pe 4
+#$ -N jext
 #$ -t 1-126
 module load apps/binapps/anaconda3/2020.07
 
@@ -23,7 +20,7 @@ fi
 # 2) REMOVE PREVIOUS ATTEMPTS
 if [ -e line.tmp$SGE_TASK_ID ]
 then
-	rm -rf line.tmp$SGE_TASK_ID
+	rm -rf line.tmp$SGE_TASK_ID isolate.fasta
 fi
 
 # 2) UPDATE FASTA HEADERS
@@ -38,4 +35,7 @@ done <clean_gff.tmp$SGE_TASK_ID
 conda activate bedtools_env
 bedtools getfasta -name -fi $fasta_file -bed line.tmp$SGE_TASK_ID > fasta.tmp$SGE_TASK_ID
 sed 's/::.*//g' fasta.tmp$SGE_TASK_ID >> isolate.fasta
+
+# 3) REMOVE TEMPORARY FILES
+rm *.tmp$SGE_TASK_ID
 
